@@ -1,0 +1,17 @@
+# Geheimnisse – niemals hochladen
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Laufzeitdaten
+*.db
+*.sqlite3
+data/
+logs/
+transcripts/

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrimeFFA Web-Konsole</title>
+<style>
+:root{
+  --main:#89CFF0; --light:#BFEFFF; --dark:#5DADE2;
+  --text:#17384F; --muted:#5B7C93; --panel:#FFFFFF;
+  --soft:#F7FCFF; --green:#2ECC71; --red:#ED4245; --yellow:#E6A700;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh; font-family:"Segoe UI",system-ui,sans-serif; color:var(--text);
+  background:linear-gradient(180deg,#F8FDFF 0%,#D6EFFD 100%);
+  background-attachment:fixed; overflow-x:hidden;
+}
+/* ---------- animierter Hintergrund ---------- */
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bubble{
+  position:absolute;bottom:-80px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%, #ffffff 0%, #EAF7FF 45%, #C9EBFD 100%);
+  opacity:.75; animation:rise linear infinite;
+}
+@keyframes rise{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  8%{opacity:.75}
+  100%{transform:translateY(-115vh) translateX(30px);opacity:0}
+}
+.glow{
+  position:fixed;width:60vmax;height:60vmax;border-radius:50%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle, rgba(137,207,240,.35) 0%, rgba(137,207,240,0) 65%);
+  animation:drift 22s ease-in-out infinite alternate;
+}
+.glow.g1{top:-25vmax;left:-20vmax}
+.glow.g2{bottom:-30vmax;right:-22vmax;animation-delay:-11s;
+  background:radial-gradient(circle, rgba(191,239,255,.55) 0%, rgba(191,239,255,0) 65%)}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(8vmax,6vmax) scale(1.15)}}
+
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:24px 16px 48px}
+
+/* ---------- Kopf ---------- */
+header{
+  background:linear-gradient(90deg,var(--main),var(--dark));
+  border-radius:16px;color:#fff;padding:16px 22px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  box-shadow:0 8px 24px rgba(93,173,226,.35);
+}
+header h1{font-size:20px;display:flex;align-items:center;gap:10px}
+header .sub{font-size:12px;opacity:.9}
+/* ---------- Panels ---------- */
+.panel{
+  background:var(--panel);border-radius:16px;padding:18px 20px;margin-bottom:16px;
+  box-shadow:0 6px 22px rgba(23,56,79,.10); animation:pop .45s ease both;
+}
+@keyframes pop{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+h2{font-size:14px;color:var(--dark);letter-spacing:.4px;margin-bottom:12px;text-transform:uppercase}
+/* ---------- Login ---------- */
+#loginView{display:flex;justify-content:center;padding-top:7vh}
+.card{
+  width:min(400px,94vw);background:var(--panel);border-radius:20px;padding:34px 30px;
+  box-shadow:0 18px 50px rgba(23,56,79,.18);text-align:center;
+  animation:pop .5s ease both;
+}
+.avatar{
+  width:76px;height:76px;margin:0 auto 14px;border-radius:50%;
+  background:linear-gradient(135deg,var(--light),var(--main));
+  display:flex;align-items:center;justify-content:center;font-size:36px;
+  box-shadow:0 0 0 6px rgba(137,207,240,.25); animation:bob 3s ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.card h1{font-size:22px;margin-bottom:4px}
+.card p.hint{color:var(--muted);font-size:13px;margin-bottom:20px}
+.field{text-align:left;margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.field input{
+  width:100%;padding:12px 14px;border:2px solid #D9EEFB;border-radius:10px;
+  font-size:15px;outline:none;background:var(--soft);transition:.2s;
+}
+.field input:focus{border-color:var(--main);background:#fff;box-shadow:0 0 0 4px rgba(137,207,240,.22)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:46px}
+.pw-eye{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:transparent;border:0;font-size:18px;cursor:pointer;padding:6px 8px;
+  border-radius:8px;transition:.15s;line-height:1;
+}
+.pw-eye:hover{background:#E3F4FE}
+.pw-eye.off{filter:grayscale(1);opacity:.55}
+.pw-show{
+  display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);
+  cursor:pointer;margin-top:8px;user-select:none;
+}
+.pw-show input{width:16px;height:16px;accent-color:var(--dark);cursor:pointer}
+.btn{
+  border:0;border-radius:10px;padding:12px 20px;font-size:15px;font-weight:700;
+  cursor:pointer;transition:.18s;color:#fff;background:var(--dark);
+}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.login{width:100%;background:linear-gradient(90deg,var(--main),var(--dark));padding:13px}
+.btn.gray{background:#9FB8CB}
+.btn.red{background:var(--red)}
+.btn.green{background:var(--green)}
+.btn.blue{background:var(--dark)}
+.error{
+  display:none;background:#FDECEC;color:#C0392B;border:1px solid #F5B7B1;
+  border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:14px;
+  animation:shake .4s ease;
+}
+.error.show{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}
+40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+/* ---------- Status ---------- */
+.statusRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dot{
+  width:16px;height:16px;border-radius:50%;background:var(--red);position:relative;flex:none;
+}
+.dot.on{background:var(--green)}
+.dot::after{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:3px solid currentColor;color:inherit;opacity:.35;animation:pulse 1.6s ease-out infinite;
+}
+.dot.on::after{border-color:var(--green)}
+@keyframes pulse{0%{transform:scale(.6);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+.stateText{font-size:17px;font-weight:700}
+.stateText.on{color:var(--green)}
+.stateText.off{color:var(--red)}
+.meta{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+/* ---------- Optionen ---------- */
+.opts{display:flex;gap:20px;flex-wrap:wrap;margin-top:6px}
+.opts label{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.opts input{width:17px;height:17px;accent-color:var(--dark);cursor:pointer}
+/* ---------- Dateien ---------- */
+.files{display:flex;gap:10px;flex-wrap:wrap}
+.chip{
+  background:var(--soft);border:1px solid #D9EEFB;border-radius:999px;
+  padding:8px 16px;font-size:13px;cursor:pointer;transition:.18s;font-weight:600;color:var(--text);
+}
+.chip:hover{background:var(--main);color:#fff;border-color:var(--main);transform:translateY(-2px)}
+.fileinfo{margin-top:12px;font-size:12.5px;color:var(--muted)}
+/* ---------- Konsole ---------- */
+.consoleBox{
+  background:#0E1B2C;border-radius:12px;overflow:hidden;
+}
+.consoleBar{
+  background:#16283D;padding:8px 14px;display:flex;justify-content:space-between;
+  font-family:Consolas,monospace;font-size:12.5px;color:var(--main);font-weight:700;
+}
+.consoleBar .r{color:#6C8AA5;font-weight:400}
+#log{
+  height:320px;overflow-y:auto;padding:12px 14px;
+  font-family:Consolas,"Courier New",monospace;font-size:13px;line-height:1.55;color:#BFEFFF;
+  white-space:pre-wrap;word-break:break-word;
+}
+#log .err{color:#FF9B9B}
+#log .warn{color:#FFE08A}
+#log .info{color:#8FE9FF}
+#log::-webkit-scrollbar{width:9px}
+#log::-webkit-scrollbar-thumb{background:#2C4A66;border-radius:6px}
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;bottom:26px;left:50%;transform:translate(-50%,80px);z-index:50;
+  background:var(--text);color:#fff;padding:12px 22px;border-radius:999px;font-size:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;transition:.3s;
+}
+#toast.show{transform:translate(-50%,0);opacity:1}
+.busy{opacity:.55;pointer-events:none}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+<div class="bubbles" id="bubbles"></div>
+
+<!-- ============================ LOGIN ============================ -->
+<div class="wrap" id="loginView">
+  <div class="card">
+    <div class="avatar">🩵</div>
+    <h1>PrimeFFA Web-Konsole</h1>
+    <p class="hint">Melde dich an, um den Bot zu steuern.<br>Login ist bei jedem Seitenaufruf erforderlich.</p>
+    <div class="error" id="loginError">Falsches Passwort oder Benutzername</div>
+    <div class="field">
+      <label for="user">Benutzername</label>
+      <input id="user" type="text" autocomplete="username" placeholder="Benutzername">
+    </div>
+    <div class="field">
+      <label for="pass">Passwort</label>
+      <div class="pw-wrap">
+        <input id="pass" type="password" autocomplete="current-password" placeholder="Passwort">
+        <button type="button" class="pw-eye" id="pwEye" title="Passwort anzeigen">👁</button>
+      </div>
+      <label class="pw-show"><input type="checkbox" id="pwCheck"> Passwort anzeigen</label>
+    </div>
+    <button class="btn login" id="loginBtn">Einloggen</button>
+  </div>
+</div>
+
+<!-- ============================ KONSOLE ============================ -->
+<div class="wrap hidden" id="consoleView">
+  <header>
+    <h1>🩵 PrimeFFA Web-Konsole</h1>
+    <div style="text-align:right">
+      <div class="sub">Cloud · 24/7 · Babyblau</div>
+      <button class="btn gray" id="logoutBtn" style="padding:5px 14px;font-size:12px;margin-top:5px">Abmelden</button>
+    </div>
+  </header>
+
+  <!-- Status -->
+  <div class="panel">
+    <div class="statusRow">
+      <div class="dot" id="statusDot"></div>
+      <div class="stateText off" id="statusText">Wird geladen ...</div>
+      <div class="meta" id="pidText">PID: –</div>
+      <div class="meta" id="uptimeText">Läuft seit: –</div>
+    </div>
+    <div class="meta" style="margin-top:6px">
+      Der Bot läuft 24/7 im Cloud-Hosting – unabhängig von deinem PC.
+      Steuerung: nur Start, Stop und Restart.
+    </div>
+    <div class="controls" id="ctrlBtns">
+      <button class="btn green" id="startBtn">▶ Start</button>
+      <button class="btn red" id="stopBtn">⏸ Stop</button>
+      <button class="btn blue" id="restartBtn">↻ Restart</button>
+      <button class="btn gray" id="refreshBtn">⟳ Aktualisieren</button>
+    </div>
+  </div>
+
+  <!-- Konsole -->
+  <div class="panel">
+    <h2>Live-Konsole</h2>
+    <div class="consoleBox">
+      <div class="consoleBar">
+        <span>▸ PrimeFFA-Bot-Log</span>
+        <span>
+          <button class="btn gray" id="clearBtn" style="padding:2px 10px;font-size:11px">Leeren</button>
+          <span class="r" style="margin-left:8px">in Echtzeit</span>
+        </span>
+      </div>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= Blasen-Hintergrund ================= */
+(function(){
+  const box=document.getElementById("bubbles");
+  for(let i=0;i<16;i++){
+    const b=document.createElement("div");
+    b.className="bubble";
+    const s=14+Math.random()*46;
+    b.style.width=s+"px"; b.style.height=s+"px";
+    b.style.left=(Math.random()*100)+"%";
+    b.style.animationDuration=(11+Math.random()*16)+"s";
+    b.style.animationDelay=(-Math.random()*22)+"s";
+    box.appendChild(b);
+  }
+})();
+
+/* ================= Zustand ================= */
+let token=null, logOffset=0, sinceTs=null, busy=false;
+const $=id=>document.getElementById(id);
+
+/* Token NIE speichern -> bei jedem Laden immer neu einloggen */
+sessionStorage.removeItem("primeffa_token");
+localStorage.removeItem("primeffa_token");
+
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+async function api(path,method="GET",body){
+  const r=await fetch(path,{
+    method,
+    headers:Object.assign({"Content-Type":"application/json"},
+      token?{"Authorization":"Bearer "+token}:{}),
+    body:body?JSON.stringify(body):undefined
+  });
+  let data={};
+  try{data=await r.json()}catch(e){}
+  if(r.status===401 && path!=="/api/login"){ logout(false); throw new Error("Sitzung abgelaufen"); }
+  if(!r.ok && !(data&&data.error)) throw new Error("HTTP "+r.status);
+  return data;
+}
+
+/* ================= Login ================= */
+function showConsole(){
+  $("loginView").classList.add("hidden");
+  $("consoleView").classList.remove("hidden");
+  refreshAll();
+  setInterval(refreshAll,2500);
+  setInterval(pollLogs,1200);
+}
+function showLogin(msg){
+  $("consoleView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  token=null;
+  if(msg){const e=$("loginError");e.textContent=msg;e.classList.add("show");
+    document.querySelector(".card").style.animation="none";
+    void document.querySelector(".card").offsetWidth;
+    document.querySelector(".card").style.animation="shake .4s ease";}
+  else $("loginError").classList.remove("show");
+}
+function logout(callServer){
+  if(callServer&&token) api("/api/logout","POST",{}).catch(()=>{});
+  token=null;
+  showLogin();
+}
+async function doLogin(){
+  const btn=$("loginBtn"); btn.classList.add("busy");
+  try{
+    const d=await api("/api/login","POST",{user:$("user").value,pass:$("pass").value});
+    if(d.ok&&d.token){
+      token=d.token;             // nur im Speicher, nie gespeichert
+      $("loginError").classList.remove("show");
+      $("pass").value="";
+      showConsole();
+    }else showLogin(d.error||"Falsches Passwort oder Benutzername");
+  }catch(e){
+    showLogin("Falsches Passwort oder Benutzername");
+  }finally{btn.classList.remove("busy");}
+}
+$("loginBtn").onclick=doLogin;
+$("pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+$("user").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+$("logoutBtn").onclick=()=>logout(true);
+
+/* Passwort anzeigen (Augen-Button + Checkbox links daneben) */
+function setPwVisible(on){
+  $("pass").type=on?"text":"password";
+  $("pwCheck").checked=on;
+  $("pwEye").classList.toggle("off",!on);
+  $("pwEye").title=on?"Passwort verbergen":"Passwort anzeigen";
+}
+$("pwEye").onclick=()=>setPwVisible($("pass").type==="password");
+$("pwCheck").onchange=e=>setPwVisible(e.target.checked);
+
+/* ================= Status ================= */
+function fmtUptime(sec){
+  const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=Math.floor(sec%60);
+  const p=n=>String(n).padStart(2,"0");
+  return `${p(h)}:${p(m)}:${p(s)}`;
+}
+async function refreshAll(){
+  if(!token)return;
+  try{
+    const st=await api("/api/status");
+    const dot=$("statusDot"),txt=$("statusText");
+    if(st.running){
+      dot.classList.add("on"); txt.textContent="● Läuft"; txt.className="stateText on";
+      if(!sinceTs&&st.since)sinceTs=st.since*1000;
+      $("pidText").textContent="PID: "+(st.pids||[]).join(", ");
+    }else{
+      dot.classList.remove("on");
+      if(st.manual_off){txt.textContent="● Gestoppt (manuell)";txt.className="stateText off"}
+      else{txt.textContent="● Gestoppt – starte gleich neu ...";txt.className="stateText off"}
+      sinceTs=null; $("pidText").textContent="PID: –";
+    }
+    $("uptimeText").textContent="Läuft seit: "+(st.running&&sinceTs?fmtUptime((Date.now()-sinceTs)/1000):"–");
+  }catch(e){}
+}
+
+/* ================= Logs ================= */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+async function pollLogs(){
+  if(!token)return;
+  try{
+    const d=await api("/api/logs?offset="+logOffset);
+    if(d.lines&&d.lines.length){
+      const box=$("log");
+      for(const ln of d.lines){
+        const div=document.createElement("div");
+        if(ln.includes("ERROR")||ln.includes("Traceback"))div.className="err";
+        else if(ln.includes("WARNING"))div.className="warn";
+        else if(ln.includes("INFO"))div.className="info";
+        div.textContent=ln;
+        box.appendChild(div);
+      }
+      while(box.children.length>1500)box.removeChild(box.firstChild);
+      box.scrollTop=box.scrollHeight;
+    }
+    logOffset=d.offset||logOffset;
+  }catch(e){}
+}
+$("clearBtn").onclick=()=>{$("log").innerHTML="";toast("Konsole geleert")};
+
+/* ================= Aktionen ================= */
+async function action(path,label){
+  if(busy)return; busy=true;
+  $("ctrlBtns").classList.add("busy");
+  try{
+    const d=await api(path,"POST",{});
+    toast(d.message||label+" ausgeführt");
+    setTimeout(refreshAll,700);
+    setTimeout(refreshAll,2400);
+  }catch(e){toast(e.message||"Fehler")}
+  finally{busy=false;$("ctrlBtns").classList.remove("busy")}
+}
+$("startBtn").onclick=()=>action("/api/start","Start");
+$("stopBtn").onclick=()=>action("/api/stop","Stop");
+$("restartBtn").onclick=()=>action("/api/restart","Restart");
+$("refreshBtn").onclick=()=>{refreshAll();toast("Aktualisiert")};
+
+/* ================= Start: IMMER Login-Seite ================= */
+showLogin();
+</script>
+</body>
+</html>
